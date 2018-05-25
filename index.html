@@ -51,14 +51,14 @@ height: auto
                     </div>
 
                 <div class="input-group col-md-3" style="margin-top:20p;margin-left:20px">
-                    <input style="width:100%;height:30px;" type="text" class="form-control" placeholder="请输入生日" id=search_title />
+                    <input style="width:100%;height:30px;" type="text" class="form-control" placeholder="请输入生日" id=search_value />
 <br>
                     <span class="input-group-btn">
                         <button style="width:10%;height:30px;border:none;border:1px solid #ccc;margin-top:10px;" class="btn btn-info btn-search" id=search>查找</button>
 
                     </span>
                 </div>
-
+                <div id = "list"></div>
 
 
             </div>
@@ -98,7 +98,7 @@ height: auto
                 <span style="line-height:30px;font-size:25x;margin-bottom:10px;    color: #fff;
     background: pink;
     width: 100%;
-    display: inline-block;" class="">输入您的性别：</span>
+    display: inline-block;" class="">输入您的生日：</span>
 <br>
                 <input style="width:100%;height:30px;" type="text" class="form-control" placeholder="输入生日" id=input_content>
             </div>
@@ -124,24 +124,27 @@ height: auto
 <script>
     "use strict";
     var dappContactAddress = "n1pBXDJuTtqDyYxdLMMLVnBvVKApYBRsnFX";
-    var nebulas = require("nebulas"), Account = Account, neb = new nebulas.Neb();
+    var nebulas = require("nebulas"),
+        Account = nebulas.Account,
+        neb = new nebulas.Neb();
     neb.setRequest(new nebulas.HttpRequest("https://mainnet.nebulas.io"))
     var NebPay = require("nebpay");     //https://github.com/nebulasio/nebPay
     var nebPay = new NebPay();
     var serialNumber
     $("#search").click(function () {
-        if (!$("#search_title").val()) {
-            alter('搜索生日不能为空');
+        if (!$("#search_value").val()) {
+            alert('搜索生日不能为空');
             return;
         }
         $('#content').text("");
-        var from = dappContactAddress
+        var from = Account.NewAccount().getAddressString();
         var value = "0";
         var nonce = "0"
         var gas_price = "1000000"
         var gas_limit = "2000000"
         var callFunction = "get";
-        var callArgs = "[\"" + $("#search_title").val() + "\"]";
+        console.log($("#search_value").val());
+        var callArgs = "[\"" + $("#search_value").val() + "\"]"; //in the form of ["args"]
         console.log(callArgs);
         var contract = {
             "function": callFunction,
@@ -149,25 +152,25 @@ height: auto
         }
         neb.api.call(from, dappContactAddress, value, nonce, gas_price, gas_limit, contract).then(function (resp) {
             var result = resp.result;
-
-            if (result === 'null') {
-                $('#date').text("没有发现同一天生日的人，你可以立即发布一哈");
-                $('#contact').text("");
-                $('#sex').text("");
-                $('#author').text("");
+            if (result == 'null') {
+                alert("没有发现同一天生日的人，你可以立即发布一哈");
                 return;
             }
             console.log(result);
             result = JSON.parse(result);
+            console.log(result.sex)
             $("#sex").text(result.sex);
             $('#date').text("生日：" + result.date);
             $('#contact').text("联系方式:  " + result.contact);
+            var html=[];
+            html.push('<div class=""><ul><li>性别：'+result.sex+'</li><li>生日：'+result.date+'</li><li>联系方式：'+result.contact+'</li></ul></div>');
+            $("#list").html(html);
         }).catch(function (err) {
             console.log("error :" + err.message);
         })
     })
     $('#post').click(function () {
-        if (!$("#input_title").val() || !$("#input_content").val()) {
+        if (!$("#input_title").val() || !$("#input_content").val()|| !$("#input_contact").val()) {
             alert('性别、生日或联系方式不能为空');
             return;
         }
